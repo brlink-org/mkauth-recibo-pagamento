@@ -62,17 +62,23 @@ $usuario = "root";
 $senha = "vertrigo";
 $db = "mkradius";
 
+// Configurações da API
+$apiUrl = 'https://{{baseURL}}/message/sendText/{{instance}}'; // URL da API
+$apiToken = 'seu-token-aqui'; // Token da API
+
 // Conexão com o banco de dados
-$con = mysqli_connect($host, $usuario, $senha, $db);
-if (!$con) {
-    die("Erro ao conectar ao banco de dados: " . mysqli_connect_error());
+$con = new mysqli($host, $usuario, $senha, $db);
+if ($con->connect_error) {
+    die("Erro ao conectar ao banco de dados: " . $con->connect_error);
 }
 
 // Consulta para ler os registros da tabela brl_pago
 $query = "SELECT * FROM brl_pago";
-$result = mysqli_query($con, $query);
+$stmt = $con->prepare($query);
+$stmt->execute();
+$result = $stmt->get_result();
 
-while ($row = mysqli_fetch_assoc($result)) {
+while ($row = $result->fetch_assoc()) {
     // Extrai os dados do pagamento
     $login = $row['login'];
     $datapag = $row['datapag'];
@@ -82,14 +88,17 @@ while ($row = mysqli_fetch_assoc($result)) {
     $coletor = $row['coletor'];
     $formapag = $row['formapag'];
 
-    // Segunda consulta SQL para buscar o número de celular do cliente com base no login
-    $cliente = "SELECT celular FROM sis_cliente WHERE login = '$login'";
-    $res = mysqli_query($con, $cliente);
+    // Consulta SQL para buscar o número de celular do cliente com base no login usando prepared statements
+    $clienteQuery = "SELECT celular FROM sis_cliente WHERE login = ?";
+    $clienteStmt = $con->prepare($clienteQuery);
+    $clienteStmt->bind_param('s', $login); // "s" indica que o parâmetro é uma string
+    $clienteStmt->execute();
+    $clienteResult = $clienteStmt->get_result();
     $celular = "";
 
     // Extrai o número de celular do cliente e aplica a formatação correta
-    while ($vreg = mysqli_fetch_row($res)) {
-        $celular = formatarNumero($vreg[0]); // Função que formata o número de celular
+    if ($clienteRow = $clienteResult->fetch_assoc()) {
+        $celular = formatarNumero($clienteRow['celular']);
     }
 
     // Prepara a mensagem
@@ -110,15 +119,16 @@ while ($row = mysqli_fetch_assoc($result)) {
     // Envia a mensagem via API do WhatsApp
     enviarMensagemWhatsApp($celular, $mensagem);
 
-    // Após o envio, apaga o registro da tabela brl_pago
-    $deleteQuery = "DELETE FROM brl_pago WHERE id = " . $row['id'];
-    mysqli_query($con, $deleteQuery);
+    // Após o envio, apaga o registro da tabela brl_pago usando prepared statement
+    $deleteQuery = "DELETE FROM brl_pago WHERE id = ?";
+    $deleteStmt = $con->prepare($deleteQuery);
+    $deleteStmt->bind_param('i', $row['id']); // "i" indica que o parâmetro é um inteiro
+    $deleteStmt->execute();
 }
 
 // Função para enviar a mensagem via API do WhatsApp
 function enviarMensagemWhatsApp($celular, $mensagem) {
-    $apiUrl = 'https://{{baseURL}}/message/sendText/{{instance}}';
-    $apiToken = 'seu-token-aqui';
+    global $apiUrl, $apiToken;
 
     // Prepara os dados para envio via API
     $data = array(
@@ -155,7 +165,18 @@ function enviarMensagemWhatsApp($celular, $mensagem) {
 
 // Função para formatar o número de celular
 function formatarNumero($numero) {
-    // Aqui, você pode implementar a formatação adequada para o número de celular no formato internacional
+    // Remove todos os caracteres que não sejam números
+    $numero = preg_replace('/\D/', '', $numero);
+
+    // Verifica se o número tem o código de área (DDD) com 2 dígitos e o número com 8 ou 9 dígitos
+    if (strlen($numero) == 10) {
+        // Número de telefone com 8 dígitos (sem o 9 na frente)
+        $numero = '55' . substr($numero, 0, 2) . '9' . substr($numero, 2); // Adiciona o DDI 55 e insere o 9 antes do número
+    } elseif (strlen($numero) == 11) {
+        // Número de telefone com 9 dígitos (formato correto)
+        $numero = '55' . $numero; // Adiciona o DDI 55
+    }
+
     return $numero;
 }
 
