@@ -79,12 +79,12 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 while ($row = $result->fetch_assoc()) {
-    // Extrai os dados do pagamento
+    // Extrai os dados do pagamento e formata as datas
     $login = $row['login'];
-    $datapag = $row['datapag'];
-    $datavenc = $row['datavenc'];
-    $valor = $row['valor'];
-    $valorpag = $row['valorpag'];
+    $datapag = date('d/m/Y', strtotime($row['datapag'])); // Formata a data de pagamento para dd/mm/aaaa
+    $datavenc = date('d/m/Y', strtotime($row['datavenc'])); // Formata a data de vencimento para dd/mm/aaaa
+    $valor = number_format($row['valor'], 2, ',', '.'); // Formata o valor no padrão brasileiro R$ 1.234,56
+    $valorpag = number_format($row['valorpag'], 2, ',', '.'); // Formata o valor pago no padrão brasileiro
     $coletor = $row['coletor'];
     $formapag = $row['formapag'];
 
@@ -103,17 +103,17 @@ while ($row = $result->fetch_assoc()) {
 
     // Prepara a mensagem
     $mensagem = "
-    *Mensagem Automática de Recebimento de Pagamento*
+*Mensagem Automática de Recebimento de Pagamento*
 
-    *Pagamento recebido em*: $datapag
-    *Fatura com vencimento em*: $datavenc
-    *Valor da fatura*: R$ $valor
-    *Valor do pagamento*: R$ $valorpag
-    *Pagamento recebido por*: $coletor
-    *Forma de pagamento*: $formapag
+*Pagamento recebido em*: $datapag
+*Fatura com vencimento em*: $datavenc
+*Valor da fatura*: R$ $valor
+*Valor do pagamento*: R$ $valorpag
+*Pagamento recebido por*: $coletor
+*Forma de pagamento*: $formapag
 
-    Para segunda via e comprovantes dos pagamentos acesse:
-    https://BrLink.org/cliente (coloque o *CPF* do titular)
+Para segunda via e comprovantes dos pagamentos acesse:
+https://BrLink.org/cliente (coloque o *CPF* do titular)
     ";
 
     // Envia a mensagem via API do WhatsApp
@@ -189,23 +189,25 @@ function formatarNumero($numero) {
 No início do arquivo PHP, ajuste as configurações do banco de dados mudando do padrão Mk-Auth para os detalhes da sua instalação:
 
 ```php
-$host = "localhost";    // Host do MySQL
-$usuario = "root";      // Usuário do MySQL
-$senha = "vertrigo";    // Senha do MySQL
-$db = "mkradius";       // Nome do banco de dados
+// Configurações do banco de dados
+$host = "localhost";
+$usuario = "root";
+$senha = "vertrigo";
+$db = "mkradius";
 ```
 
 #### 4.2 API de WhatsApp
-Ajuste as configurações da API de WhatsApp no arquivo PHP:
+Ajuste, também, no início do arquivo PHP as configurações da Evolution API de WhatsApp no arquivo PHP:
 
 ```php
-$apiUrl = 'https://{{baseURL}}/message/sendText/{{instance}}'; // URL da API de WhatsApp
-$apiToken = 'seu-token-aqui';                                  // Token da API
+// Configurações da API
+$apiUrl = 'https://{{baseURL}}/message/sendText/{{instance}}'; // URL da API
+$apiToken = 'seu-token-aqui'; // Token da API
 ```
 
 ### 5. Agendamento do Script (Cron Job)
-Recomenda-se configurar um cron job no servidor para executar o script PHP periodicamente. Por exemplo, para executar o script a cada 5 minutos, adicione a seguinte linha no arquivo de configuração do cron `(crontab -e)`:
+Recomenda-se configurar um cron job no servidor para executar o script PHP periodicamente. Por exemplo, para executar o script a cada 5 minutos, adicione a seguinte linha no arquivo de configuração do cron `crontab -e` ou globalmente com usuário root editando o arquivo `/etc/crontab`:
 
 ```bash
-*/5 * * * * /usr/bin/php /caminho/para/o/script.php
+* * * * * /opt/php5/bin/php -q brl_pag.php >/dev/null 2>&1
 ```
