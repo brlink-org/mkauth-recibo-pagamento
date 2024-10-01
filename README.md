@@ -32,6 +32,8 @@ Agora, crie uma trigger que será ativada após a atualização do status de pag
 Execute o seguinte comando SQL para criar a trigger:
 
 ```sql
+DELIMITER //
+
 CREATE TRIGGER tig_brl_pag
 AFTER UPDATE ON sis_lanc
 FOR EACH ROW
@@ -42,7 +44,9 @@ BEGIN
         INSERT INTO brl_pago (id, login, coletor, datavenc, datapag, valor, valorpag, formapag)
         VALUES (NEW.id, NEW.login, NEW.coletor, NEW.datavenc, NOW(), NEW.valor, NEW.valorpag, NEW.formapag);
     END IF;
-END;
+END//
+
+DELIMITER ;
 ```
 
 ### 3. Criar o Script PHP
