@@ -101,20 +101,16 @@ while ($row = $result->fetch_assoc()) {
         $celular = formatarNumero($clienteRow['celular']);
     }
 
-    // Prepara a mensagem
-    $mensagem = "
-*Mensagem Automática de Recebimento de Pagamento*
-
-*Pagamento recebido em*: $datapag
-*Fatura com vencimento em*: $datavenc
-*Valor da fatura*: R$ $valor
-*Valor do pagamento*: R$ $valorpag
-*Pagamento recebido por*: $coletor
-*Forma de pagamento*: $formapag
-
-Para segunda via e comprovantes dos pagamentos acesse:
-https://BrLink.org/cliente (coloque o *CPF* do titular)
-    ";
+    // Prepara a mensagem sem espaços desnecessários
+    $mensagem = "*Mensagem Automática de Recebimento de Pagamento*\n\n";
+    $mensagem .= "*Pagamento recebido em*: $datapag\n";
+    $mensagem .= "*Fatura com vencimento em*: $datavenc\n";
+    $mensagem .= "*Valor da fatura*: R$ $valor\n";
+    $mensagem .= "*Valor do pagamento*: R$ $valorpag\n";
+    $mensagem .= "*Pagamento recebido por*: $coletor\n";
+    $mensagem .= "*Forma de pagamento*: $formapag\n\n";
+    $mensagem .= "Para segunda via e comprovantes dos pagamentos acesse:\n";
+    $mensagem .= "https://BrLink.org/cliente (coloque o *CPF* do titular)\n";
 
     // Envia a mensagem via API do WhatsApp
     enviarMensagemWhatsApp($celular, $mensagem);
