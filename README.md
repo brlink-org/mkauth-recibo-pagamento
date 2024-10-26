@@ -42,7 +42,7 @@ BEGIN
     IF NEW.status = 'pago' THEN
         -- Insere os dados na tabela auxiliar brl_pago
         INSERT INTO brl_pago (id, login, coletor, datavenc, datapag, valor, valorpag, formapag)
-        VALUES (NEW.id, NEW.login, NEW.coletor, NEW.datavenc, NOW(), NEW.valor, NEW.valorpag, NEW.formapag);
+        VALUES (NEW.id, NEW.login, NEW.coletor, NEW.datavenc, NEW.datapag, NEW.valor, NEW.valorpag, NEW.formapag);
     END IF;
 END//
 
