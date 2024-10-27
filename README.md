@@ -22,6 +22,7 @@ CREATE TABLE brl_pago (
     valor DECIMAL(10, 2),
     valorpag DECIMAL(10, 2),
     formapag VARCHAR(32),
+    envio TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );
 ```
