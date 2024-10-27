@@ -76,8 +76,8 @@ if ($con->connect_error) {
     die("Erro ao conectar ao banco de dados: " . $con->connect_error);
 }
 
-// Consulta para ler os registros da tabela brl_pago
-$query = "SELECT * FROM brl_pago";
+// Consulta para ler registros não enviados da tabela brl_pago
+$query = "SELECT * FROM brl_pago WHERE envio = 0";
 $stmt = $con->prepare($query);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -117,13 +117,13 @@ while ($row = $result->fetch_assoc()) {
     $mensagem .= "https://BrLink.org/cliente (coloque o *CPF* do titular)\n";
 
     // Envia a mensagem via API do WhatsApp
-    enviarMensagemWhatsApp($celular, $mensagem);
-
-    // Após o envio, apaga o registro da tabela brl_pago usando prepared statement
-    $deleteQuery = "DELETE FROM brl_pago WHERE id = ?";
-    $deleteStmt = $con->prepare($deleteQuery);
-    $deleteStmt->bind_param('i', $row['id']); // "i" indica que o parâmetro é um inteiro
-    $deleteStmt->execute();
+    if (enviarMensagemWhatsApp($celular, $mensagem)) {
+        // Marca o registro como enviado na tabela brl_pago
+        $updateQuery = "UPDATE brl_pago SET envio = 1 WHERE id = ?";
+        $updateStmt = $con->prepare($updateQuery);
+        $updateStmt->bind_param('i', $row['id']); // "i" indica que o parâmetro é um inteiro
+        $updateStmt->execute();
+    }
 }
 
 // Função para enviar a mensagem via API do WhatsApp
@@ -158,8 +158,10 @@ function enviarMensagemWhatsApp($celular, $mensagem) {
     // Verifica a resposta da API
     if ($response) {
         echo "Mensagem enviada com sucesso para o número: $celular \n";
+        return true;
     } else {
         echo "Erro ao enviar mensagem para o número: $celular \n";
+        return false;
     }
 }
 
