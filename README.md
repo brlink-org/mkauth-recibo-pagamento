@@ -211,5 +211,5 @@ $apiToken = 'seu-token-aqui'; // Token da API
 Recomenda-se configurar um cron job no servidor para executar o script PHP periodicamente. Por exemplo, para executar o script a cada 5 minutos, adicione a seguinte linha no arquivo de configuração do cron `crontab -e` ou globalmente com usuário root editando o arquivo `/etc/crontab`:
 
 ```bash
-* * * * * root /opt/php5/bin/php -q /opt/mk-auth/scripts/brl_pag.php >/dev/null 2>&1
+* * * * * root /opt/php7/bin/php -q /opt/mk-auth/scripts/brl_pag.php >/dev/null 2>&1
 ```
