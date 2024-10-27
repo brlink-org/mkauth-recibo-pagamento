@@ -41,9 +41,12 @@ FOR EACH ROW
 BEGIN
     -- Verifica se o status foi atualizado para "pago"
     IF NEW.status = 'pago' THEN
-        -- Insere os dados na tabela auxiliar brl_pago
-        INSERT INTO brl_pago (id, login, coletor, datavenc, datapag, valor, valorpag, formapag)
-        VALUES (NEW.id, NEW.login, NEW.coletor, NEW.datavenc, NEW.datapag, NEW.valor, NEW.valorpag, NEW.formapag);
+        -- Verifica se o ID já existe na tabela brl_pago
+        IF NOT EXISTS (SELECT 1 FROM brl_pago WHERE id = NEW.id) THEN
+            -- Insere os dados na tabela auxiliar brl_pago
+            INSERT INTO brl_pago (id, login, coletor, datavenc, datapag, valor, valorpag, formapag)
+            VALUES (NEW.id, NEW.login, NEW.coletor, NEW.datavenc, NEW.datapag, NEW.valor, NEW.valorpag, NEW.formapag);
+        END IF;
     END IF;
 END//
 
