@@ -54,7 +54,7 @@ DELIMITER ;
 ```
 
 ### 3. Criar o Script PHP
-Este script PHP será responsável por ler os registros da tabela `brl_pago` e enviar o recibo de pagamento via WhatsApp e, após o envio, remover os registros da tabela.
+Este script PHP será responsável por ler os registros da tabela `brl_pago`, enviar o recibo de pagamento via WhatsApp e, após o envio, marcar o registro como enviado, atualizando o campo `envio` para `1`, permitindo manter um histórico dos envios.
 
 Crie um arquivo PHP e adicione o seguinte conteúdo:
 
@@ -208,8 +208,14 @@ $apiToken = 'seu-token-aqui'; // Token da API
 ```
 
 ### 5. Agendamento do Script (Cron Job)
-Recomenda-se configurar um cron job no servidor para executar o script PHP periodicamente. Por exemplo, para executar o script a cada 5 minutos, adicione a seguinte linha no arquivo de configuração do cron `crontab -e` ou globalmente com usuário root editando o arquivo `/etc/crontab`:
+Recomenda-se configurar um cron job no servidor para executar o script PHP periodicamente. Por exemplo, para executar o script a cada minuto, adicione a seguinte linha no arquivo de configuração do cron `crontab -e` ou globalmente com usuário root editando o arquivo `/etc/crontab`:
 
 ```bash
 * * * * * root /opt/php7/bin/php -q /opt/mk-auth/scripts/brl_pag.php >/dev/null 2>&1
+```
+
+Se desejar executar o script a cada 5 minutos:
+
+```bash
+*/5 * * * * root /opt/php7/bin/php -q /opt/mk-auth/scripts/brl_pag.php >/dev/null 2>&1
 ```
