@@ -33,22 +33,38 @@ Agora, crie uma trigger que será ativada após a atualização do status de pag
 Execute o seguinte comando SQL para criar a trigger:
 
 ```sql
-DELIMITER //
+DELIMITER $$
 
-CREATE TRIGGER tig_brl_pag
-AFTER UPDATE ON sis_lanc
+CREATE TRIGGER `tig_brl_pag` AFTER UPDATE ON `sis_lanc`
 FOR EACH ROW
 BEGIN
+    -- Declaração de variáveis para armazenar informações do cliente
+    DECLARE var_cli_ativado VARCHAR(1);
+    DECLARE var_zap VARCHAR(3);
+
     -- Verifica se o status foi atualizado para "pago"
     IF NEW.status = 'pago' THEN
-        -- Verifica se o ID já existe na tabela brl_pago
-        IF NOT EXISTS (SELECT 1 FROM brl_pago WHERE id = NEW.id) THEN
-            -- Insere os dados na tabela auxiliar brl_pago
-            INSERT INTO brl_pago (id, login, coletor, datavenc, datapag, valor, valorpag, formapag)
-            VALUES (NEW.id, NEW.login, NEW.coletor, NEW.datavenc, NEW.datapag, NEW.valor, NEW.valorpag, NEW.formapag);
+
+        -- Busca os valores de 'cli_ativado' e 'zap' na tabela 'sis_cliente'
+        SELECT cli_ativado, zap INTO var_cli_ativado, var_zap
+        FROM sis_cliente
+        WHERE login = NEW.login
+        LIMIT 1;
+
+        -- Verifica se o cliente está ativo e deseja receber mensagens via WhatsApp
+        IF var_cli_ativado = 's' AND var_zap = 'sim' THEN
+
+            -- Verifica se o ID já existe na tabela brl_pago para evitar duplicidades
+            IF NOT EXISTS (SELECT 1 FROM brl_pago WHERE id = NEW.id) THEN
+
+                -- Insere os dados na tabela auxiliar brl_pago
+                INSERT INTO brl_pago (id, login, coletor, datavenc, datapag, valor, valorpag, formapag)
+                VALUES (NEW.id, NEW.login, NEW.coletor, NEW.datavenc, NEW.datapag, NEW.valor, NEW.valorpag, NEW.formapag);
+
+            END IF;
         END IF;
     END IF;
-END//
+END$$
 
 DELIMITER ;
 ```
@@ -181,7 +197,6 @@ function formatarNumero($numero) {
 
     return $numero;
 }
-
 ?>
 ```
 
